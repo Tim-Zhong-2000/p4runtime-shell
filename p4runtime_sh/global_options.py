@@ -14,7 +14,7 @@
 #
 
 import enum
-from .utils import UserError
+from utils import UserError
 
 
 @enum.unique

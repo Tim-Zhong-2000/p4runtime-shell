@@ -14,8 +14,8 @@
 #
 
 from ipaddr import IPv4Address, IPv6Address, AddressValueError
-from . global_options import global_options, Options
-from .utils import UserError
+from global_options import global_options, Options
+from utils import UserError
 
 
 class UserBadIPv4Error(UserError):

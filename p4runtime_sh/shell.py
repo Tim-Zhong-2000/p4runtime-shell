@@ -28,10 +28,10 @@ from p4runtime_sh.p4runtime import (P4RuntimeClient, P4RuntimeException, parse_p
                                     SSLOptions)
 from p4.v1 import p4runtime_pb2
 from p4.config.v1 import p4info_pb2
-from . import bytes_utils
-from . global_options import global_options
-from .context import P4RuntimeEntity, P4Type, Context
-from .utils import UserError, InvalidP4InfoError
+import bytes_utils
+import global_options
+from context import P4RuntimeEntity, P4Type, Context
+from utils import UserError, InvalidP4InfoError
 import google.protobuf.text_format
 from google.protobuf import descriptor
 import queue
@@ -2369,6 +2369,47 @@ Add replicas with <self>.add(<eg_port_1>, <instance_1>).add(<eg_port_2>, <instan
             raise UserError("0 is not a valid group_id for MulticastGroupEntry")
         super()._write(type_)
 
+class RegisterEntry(_EntityBase):
+    def __init__(self, register_id=0, index=0, data=None):
+        super().__init__(P4RuntimeEntity.register_entry, p4runtime_pb2.RegisterEntry)
+        self.register_id = register_id
+        self.index = index
+        self.data = data
+        self.__doc__ = ""
+        self._init = True
+
+    def __dir__(self):
+        return ["register_id", "index", "data"]
+
+    def __setattr__(self, name, value):
+        if name[0] == "_":
+            super().__setattr__(name, value)
+            return
+        elif name == "register_id":
+            if type(value) is not int:
+                raise UserError("register_id must be an integer")
+        elif name == "index":
+            if type(value) is not int:
+                raise UserError("index must be an integer")
+        elif name == "data":
+            if type(value) is not str:
+                raise UserError("data must be an string")
+        
+        super().__setattr__(name, value)
+    
+    def _from_msg(self, msg):
+        self.register_id = msg.register_entry.register_id
+        self.index = msg.register_entry.index
+        self.data = msg.register_entry.data
+
+
+    def read(self, function=None):
+        return super().read(function)
+    
+    def _update_msg(self):
+        register_entry = p4runtime_pb2.RegisterEntry()
+        register_entry.register_id = self.register_id
+        self._entry = register_entry
 
 class CloneSessionEntry(_EntityBase):
     def __init__(self, session_id=0):
@@ -3033,6 +3074,7 @@ def main():
         (P4RuntimeEntity.action_profile_member, P4Type.action_profile, ActionProfileMember),
         (P4RuntimeEntity.action_profile_group, P4Type.action_profile, ActionProfileGroup),
         (P4RuntimeEntity.digest_entry, P4Type.digest, DigestEntry),
+        (P4RuntimeEntity.register_entry, P4Type.register, RegisterEntry),
     ]
     for entity, p4type, cls in supported_entities:
         user_ns[entity.name] = P4RuntimeEntityBuilder(p4type, entity, cls)
